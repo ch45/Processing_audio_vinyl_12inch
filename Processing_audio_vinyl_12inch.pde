@@ -57,6 +57,7 @@ void draw() {
     break;
   }
 
+  noStroke();
   fill(backgrounColour);
   rect(5, 5, 50, 15);
   fill(textColour);
@@ -81,9 +82,13 @@ void pourBiscuitSplatter() {
   for (int y = -(int)yPoint; y <= (int)yPoint; y++) {
     float radius = sqrt(sq(xPoint / drawingFactor) + sq(y / drawingFactor));
     if (radius > holeDiameter / 2 && radius <= vinylDiameter / 2) {
-      fill(getVinylColour(-xPoint, y));
+      int c = getVinylColour(-xPoint, y);
+      stroke(c);
+      fill(c);
       ellipse(-xPoint, y, 1.0, 1.0);
-      fill(getVinylColour(xPoint, y));
+      c = getVinylColour(xPoint, y);
+      stroke(c);
+      fill(c);
       ellipse(xPoint, y, 1.0, 1.0);
     }
   }
@@ -91,9 +96,13 @@ void pourBiscuitSplatter() {
   for (int x = -(int)xPoint; x <= (int)xPoint; x++) {
     float radius = sqrt(sq(x / drawingFactor) + sq(yPoint / drawingFactor));
     if (radius > holeDiameter / 2 && radius <= vinylDiameter / 2) {
-      fill(getVinylColour(x, -yPoint));
+      int c = getVinylColour(x, -yPoint);
+      stroke(c);
+      fill(c);
       ellipse(x, -yPoint, 1.0, 1.0);
-      fill(getVinylColour(x, yPoint));
+      c = getVinylColour(x, yPoint);
+      stroke(c);
+      fill(c);
       ellipse(x, yPoint, 1.0, 1.0);
     }
   }
