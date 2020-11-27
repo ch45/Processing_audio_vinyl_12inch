@@ -4,15 +4,17 @@ Loosely replicate the processing and play back of a vinyl record.
 
 ## New Features!
 
-- When cutting rotate more than once per processing frame
+- When cutting rotate more than once per Processing frame
+- Add the vinyl biscuit
 
 ## TODO
 
-- Create the biscuit splatter - rectangular (square) spiral
+- Add audio file input
+- Add the render to PDF
 - Create a label
   - Create side 1 and 2 (for realistic)
-  - Create the file name as the text on the label
-  - Create the matrix inscription as script text in runout
+  - Add the file name as the text on the label
+  - Add a matrix inscription as script text in runout
 - Create the hole
-- Rotate the completed cut to replay back (or augment the source music file)
+- Rotate the completed cut to replay back (or augment the source audio file)
 

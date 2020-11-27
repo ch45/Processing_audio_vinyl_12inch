@@ -7,6 +7,7 @@ enum Phase { BISCUIT, DROP, LEADIN, TRACK, LEADOUT, LOCKED, LIFT }
 final float FPS = 60.3;
 final float RPM = 33.333;
 final int REPS = 5;
+final float holeDiameter = 7.2;
 final float leadinPitch = 0.9;
 final float leadinRevolutions = 3;
 final float leadoutPitch = 6.4;
@@ -38,13 +39,16 @@ void setup() {
 
 void draw() {
   switch (currentPhase) {
+  case BISCUIT:
+    pourBiscuitSplatter();
+    break;
   case DROP:
     // beginRecord(PDF, "Line-#######.pdf");
   case LEADIN:
   case TRACK:
   case LEADOUT:
   case LOCKED:
-    for (int count = REPS; count > 0; count--){
+    for (int count = REPS; count > 0; count--) {
       cutVinyl();
     }
     break;
@@ -61,11 +65,48 @@ void draw() {
 
 void initRealistic() {
   currentAngle = startAngle;
-  currentPhase = Phase.DROP;
-  currentRadius = maxOuterDiameter / 2;
+  currentPhase = Phase.BISCUIT;
+  currentRadius = 0;
   drawingFactor = (min(width, height) - 2 * borderPixels) / vinylDiameter;
-  trackChord = getTrackChord();
   trackPitch = ((maxOuterDiameter / 2 - leadinRevolutions * leadinPitch) - (minInnerDiameter / 2 + leadoutRevolutions * leadoutPitch)) / (getTrackDuration() * getRevolutionsPerSecond());
+}
+
+void pourBiscuitSplatter() {
+  float xPoint = drawingFactor * currentRadius;
+  float yPoint = drawingFactor * currentRadius;
+
+  pushMatrix();
+  translate(width / 2, height / 2);
+
+  for (int y = -(int)yPoint; y <= (int)yPoint; y++) {
+    float radius = sqrt(sq(xPoint / drawingFactor) + sq(y / drawingFactor));
+    if (radius > holeDiameter / 2 && radius <= vinylDiameter / 2) {
+      fill(getVinylColour(-xPoint, y));
+      ellipse(-xPoint, y, 1.0, 1.0);
+      fill(getVinylColour(xPoint, y));
+      ellipse(xPoint, y, 1.0, 1.0);
+    }
+  }
+
+  for (int x = -(int)xPoint; x <= (int)xPoint; x++) {
+    float radius = sqrt(sq(x / drawingFactor) + sq(yPoint / drawingFactor));
+    if (radius > holeDiameter / 2 && radius <= vinylDiameter / 2) {
+      fill(getVinylColour(x, -yPoint));
+      ellipse(x, -yPoint, 1.0, 1.0);
+      fill(getVinylColour(x, yPoint));
+      ellipse(x, yPoint, 1.0, 1.0);
+    }
+  }
+
+  popMatrix();
+
+  currentRadius += 1.0 / drawingFactor;
+
+  if (currentRadius > vinylDiameter / 2) {
+    currentPhase = Phase.DROP;
+    currentRadius = maxOuterDiameter / 2;
+    trackChord = getTrackChord();
+  }
 }
 
 void cutVinyl() {
@@ -87,7 +128,7 @@ void cutVinyl() {
   rotateVinyl();
 }
 
-int getVinylColour() {
+int getVinylColour(float x, float y) {
   return 0;
 }
 
