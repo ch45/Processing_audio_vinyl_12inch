@@ -275,20 +275,22 @@ String[] listFileNames(String dir) {
 
 static String curAudioFile;
 String getNextAudioFilename(String path) {
+  boolean seen = false;
   String firstName = null;
   String[] filenames = listFileNames(path);
-  boolean seen = false;
-  for (String name : filenames) {
-    if (name.matches(fileRegEx)) {
-      if (firstName == null) {
-        firstName = name;
-      }
-      if (seen) {
-        curAudioFile = name; // Next file
-        break;
-      }
-      if (name.equals(curAudioFile)) {
-        seen = true;
+  if (filenames != null) {
+    for (String name : filenames) {
+      if (name.matches(fileRegEx)) {
+        if (firstName == null) {
+          firstName = name;
+        }
+        if (seen) {
+          curAudioFile = name; // Next file
+          break;
+        }
+        if (name.equals(curAudioFile)) {
+          seen = true;
+        }
       }
     }
   }
