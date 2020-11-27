@@ -1,5 +1,6 @@
 // Processing_audio_vinyl_12inch.pde
 
+import ddf.minim.*;
 import processing.pdf.*;
 
 enum Phase { BISCUIT, DROP, LEADIN, TRACK, LEADOUT, LOCKED, LIFT }
@@ -19,6 +20,7 @@ final float vinylDiameter = 300;
 final int borderPixels = 10;
 final int backgrounColour = 255;
 final int grooveColour = 192;
+final int labelTextColour = 192;
 final int textColour = 32;
 
 Phase currentPhase;
@@ -28,12 +30,19 @@ float trackChord;
 float trackPitch;
 float drawingFactor;
 
+Minim minim;
+AudioPlayer player;
+String fileRegEx = "^.+\\.(wav|aiff|au|snd|mp3)$";
+
 String consoleText = "";
 
 void setup() {
   size(640, 480);
   frameRate(FPS);
   background(backgrounColour);
+
+  initAudio();
+
   initRealistic();
 }
 
@@ -61,7 +70,16 @@ void draw() {
   fill(backgrounColour);
   rect(5, 5, 50, 15);
   fill(textColour);
+  textSize(12);
   text(String.format("%5.1f fps", frameRate), 5, 15);
+}
+
+void initAudio() {
+  String filename = getNextAudioFilename(dataPath(""));
+  if (filename != null) {
+    minim = new Minim(this);
+    player = minim.loadFile(filename, 1024);
+  }
 }
 
 void initRealistic() {
@@ -130,7 +148,7 @@ void cutVinyl() {
   rotate(currentAngle);
   fill(grooveColour);
 
-  ellipse(0, 0, trackChord, 1.0);
+  ellipse(0, 0, trackChord, getAudioLevel());
 
   popMatrix();
 
@@ -158,11 +176,15 @@ void rotateVinyl() {
     trackChord = getTrackChord();
     switch (currentPhase) {
     case DROP:
+      dumpMetaData();
       currentPhase = Phase.LEADIN;
       break;
     case LEADIN:
       if (currentRadius <= maxOuterDiameter / 2 - leadinRevolutions * leadinPitch) {
         currentPhase = Phase.TRACK;
+      }
+      if (player != null) {
+        player.play();
       }
       break;
     case TRACK:
@@ -212,6 +234,11 @@ boolean liftStylus() {
 }
 
 float getTrackDuration() {
+  if (player != null) {
+    int m = player.length();
+    println(String.format("player.length() %7d", m));
+    return m / 1000.0;
+  }
   return 2.5 * 60; // 2 minute 30 second track
 }
 
@@ -225,4 +252,70 @@ float getRevolutionsPerSecond() {
 
 float getTrackChord() {
   return floor(TWO_PI * drawingFactor * currentRadius / (REPS * getFPS()) + 1);
+}
+
+float getAudioLevel() {
+  if (currentPhase == Phase.TRACK && player != null) {
+    return 1.0 + drawingFactor * (trackPitch * player.left.level() + trackPitch * player.right.level());
+  }
+  return 1.0;
+}
+
+// This function returns all the files in a directory as an array of Strings
+String[] listFileNames(String dir) {
+  File file = new File(dir);
+  if (file.isDirectory()) {
+    String names[] = file.list();
+    return names;
+  } else {
+    // If it's not a directory
+    return null;
+  }
+}
+
+static String curAudioFile;
+String getNextAudioFilename(String path) {
+  String firstName = null;
+  String[] filenames = listFileNames(path);
+  boolean seen = false;
+  for (String name : filenames) {
+    if (name.matches(fileRegEx)) {
+      if (firstName == null) {
+        firstName = name;
+      }
+      if (seen) {
+        curAudioFile = name; // Next file
+        break;
+      }
+      if (name.equals(curAudioFile)) {
+        seen = true;
+      }
+    }
+  }
+  if (!seen && firstName != null) {
+    curAudioFile = firstName;
+  }
+
+  return curAudioFile;
+}
+
+void dumpMetaData() {
+  if (player != null) {
+    AudioMetaData meta = player.getMetaData();
+    pushMatrix();
+    int size = (int)(5 * drawingFactor);
+    int y = 2 * size;
+    fill(labelTextColour);
+    textSize(size);
+    translate(width / 2, height / 2);
+    String txt = String.format("%s (%s)", meta.title(), meta.composer());
+    text(txt, -size * txt.length() / 4, y += size);
+    txt = meta.album();
+    text(txt, -size * txt.length() / 4, y += size);
+    txt = meta.author();
+    text(txt, -size * txt.length() / 4, y += size);
+    txt = meta.date();
+    text(txt, -size * txt.length() / 4, y += size);
+    popMatrix();
+  }
 }
