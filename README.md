@@ -7,10 +7,10 @@ Loosely replicate the processing and play back of a vinyl record (WIP).
 - When cutting rotate more than once per Processing frame
 - Now draws the vinyl 'biscuit'
 - Now renders an audio file placed in a data sub directory
+- Add rendering of audio file to PDF vinyl
 
 ## TODO
 
-- Add the render to PDF
 - Create a label
   - Create side 1 and 2 (for realistic)
   - Add the file name as the text on the label

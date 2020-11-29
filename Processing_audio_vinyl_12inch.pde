@@ -29,6 +29,8 @@ float currentRadius;
 float trackChord;
 float trackPitch;
 float drawingFactor;
+boolean writingPDF;
+boolean enablePDF;
 
 PGraphics vinylCutout;
 
@@ -43,7 +45,8 @@ void setup() {
   frameRate(FPS);
   background(backgroundColour);
 
-  initAudio();
+  enablePDF = initAudio();
+  writingPDF = false;
 
   initRealistic();
 }
@@ -51,10 +54,18 @@ void setup() {
 void draw() {
   switch (currentPhase) {
   case BISCUIT:
-    pourBiscuitSplatter();
+    if (enablePDF) {
+      if (!writingPDF) {
+        beginRecord(PDF, generatePDFFilename());
+        placeVinylBiscuit();
+        writingPDF = true;
+      }
+    }
+    else {
+      pourBiscuitSplatter();
+    }
     break;
   case DROP:
-    // beginRecord(PDF, "Line-#######.pdf");
   case LEADIN:
   case TRACK:
   case LEADOUT:
@@ -63,25 +74,37 @@ void draw() {
       cutVinyl();
     }
     break;
+  case LIFT:
+    if (enablePDF) {
+      if (writingPDF) {
+        endRecord();
+        writingPDF = false;
+      } else {
+        exit();
+      }
+    } 
   default:
-    // endRecord();
     break;
   }
 
-  noStroke();
-  fill(backgroundColour);
-  rect(5, 5, 50, 15);
-  fill(textColour);
-  textSize(12);
-  text(String.format("%5.1f fps", frameRate), 5, 15);
+  if (!writingPDF) {
+    noStroke();
+    fill(backgroundColour);
+    rect(5, 5, 50, 15);
+    fill(textColour);
+    textSize(12);
+    text(String.format("%5.1f fps", frameRate), 5, 15);
+  }
 }
 
-void initAudio() {
+boolean initAudio() {
   String filename = getNextAudioFilename(dataPath(""));
   if (filename != null) {
     minim = new Minim(this);
     player = minim.loadFile(filename, 1024);
+    return true;
   }
+  return false;
 }
 
 void initRealistic() {
@@ -92,6 +115,16 @@ void initRealistic() {
   trackPitch = ((maxOuterDiameter / 2 - leadinRevolutions * leadinPitch) - (minInnerDiameter / 2 + leadoutRevolutions * leadoutPitch)) / (getTrackDuration() * getRevolutionsPerSecond());
   vinylCutout = cutoutCircle(vinylDiameter * drawingFactor, vinylDiameter * drawingFactor);
   vinylCutout = cutoutHole(vinylCutout);
+}
+
+void placeVinylBiscuit() {
+  pushMatrix();
+  translate(width / 2, height / 2);
+  image(vinylCutout, -vinylCutout.width / 2, -vinylCutout.height / 2);
+  popMatrix();
+  currentPhase = Phase.DROP;
+  currentRadius = maxOuterDiameter / 2;
+  trackChord = getTrackChord();
 }
 
 void pourBiscuitSplatter() {
@@ -263,7 +296,7 @@ float getTrackChord() {
 
 float getAudioLevel() {
   if (currentPhase == Phase.TRACK && player != null) {
-    return 1.0 + drawingFactor * (trackPitch * player.left.level() + trackPitch * player.right.level());
+    return 1.0 + drawingFactor * trackPitch * (player.left.level() + player.right.level()) / 2;
   }
   return 1.0;
 }
@@ -326,6 +359,11 @@ String getNextAudioFilename(String path) {
   }
 
   return curAudioFile;
+}
+
+String generatePDFFilename() {
+  String file = curAudioFile.substring(0, curAudioFile.lastIndexOf('.'));
+  return String.format("%4d-%02d-%02d-%02d%02d_%s.pdf", year(), month(), day(), hour(), minute(), file);
 }
 
 void dumpMetaData() {

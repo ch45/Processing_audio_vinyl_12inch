@@ -3,6 +3,7 @@
 *.orig
 *.zip
 *~
+20*.pdf
 _*
-discards*
 data/*
+discards*
