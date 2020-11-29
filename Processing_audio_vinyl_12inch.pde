@@ -18,7 +18,7 @@ final float minInnerDiameter = 115.0;
 final float startAngle = 120 / 360.0 * TWO_PI;
 final float vinylDiameter = 300;
 final int borderPixels = 10;
-final int backgrounColour = 255;
+final int backgroundColour = 255;
 final int grooveColour = 192;
 final int labelTextColour = 192;
 final int textColour = 32;
@@ -30,6 +30,8 @@ float trackChord;
 float trackPitch;
 float drawingFactor;
 
+PGraphics vinylCutout;
+
 Minim minim;
 AudioPlayer player;
 String fileRegEx = "^.+\\.(wav|aiff|au|snd|mp3)$";
@@ -39,7 +41,7 @@ String consoleText = "";
 void setup() {
   size(640, 480);
   frameRate(FPS);
-  background(backgrounColour);
+  background(backgroundColour);
 
   initAudio();
 
@@ -67,7 +69,7 @@ void draw() {
   }
 
   noStroke();
-  fill(backgrounColour);
+  fill(backgroundColour);
   rect(5, 5, 50, 15);
   fill(textColour);
   textSize(12);
@@ -88,6 +90,8 @@ void initRealistic() {
   currentRadius = 0;
   drawingFactor = (min(width, height) - 2 * borderPixels) / vinylDiameter;
   trackPitch = ((maxOuterDiameter / 2 - leadinRevolutions * leadinPitch) - (minInnerDiameter / 2 + leadoutRevolutions * leadoutPitch)) / (getTrackDuration() * getRevolutionsPerSecond());
+  vinylCutout = cutoutCircle(vinylDiameter * drawingFactor, vinylDiameter * drawingFactor);
+  vinylCutout = cutoutHole(vinylCutout);
 }
 
 void pourBiscuitSplatter() {
@@ -97,30 +101,33 @@ void pourBiscuitSplatter() {
   pushMatrix();
   translate(width / 2, height / 2);
 
+  int offsetToCentre = min(vinylCutout.width, vinylCutout.height) / 2;
+  int background = vinylCutout.get(0, 0);
+
   for (int y = -(int)yPoint; y <= (int)yPoint; y++) {
-    float radius = sqrt(sq(xPoint / drawingFactor) + sq(y / drawingFactor));
-    if (radius > holeDiameter / 2 && radius <= vinylDiameter / 2) {
-      int c = getVinylColour(-xPoint, y);
-      stroke(c);
-      fill(c);
+    int cutoutColour = vinylCutout.get((int)(offsetToCentre + xPoint), (int)(offsetToCentre + y));
+    if (cutoutColour != background) {
+      int vinylColour = getVinylColour(-xPoint, y);
+      stroke(vinylColour);
+      fill(vinylColour);
       ellipse(-xPoint, y, 1.0, 1.0);
-      c = getVinylColour(xPoint, y);
-      stroke(c);
-      fill(c);
+      vinylColour = getVinylColour(xPoint, y);
+      stroke(vinylColour);
+      fill(vinylColour);
       ellipse(xPoint, y, 1.0, 1.0);
     }
   }
 
   for (int x = -(int)xPoint; x <= (int)xPoint; x++) {
-    float radius = sqrt(sq(x / drawingFactor) + sq(yPoint / drawingFactor));
-    if (radius > holeDiameter / 2 && radius <= vinylDiameter / 2) {
-      int c = getVinylColour(x, -yPoint);
-      stroke(c);
-      fill(c);
+    int cutoutColour = vinylCutout.get((int)(offsetToCentre + x), (int)(offsetToCentre + yPoint));
+    if (cutoutColour != background) {
+      int vinylColour = getVinylColour(x, -yPoint);
+      stroke(vinylColour);
+      fill(vinylColour);
       ellipse(x, -yPoint, 1.0, 1.0);
-      c = getVinylColour(x, yPoint);
-      stroke(c);
-      fill(c);
+      vinylColour = getVinylColour(x, yPoint);
+      stroke(vinylColour);
+      fill(vinylColour);
       ellipse(x, yPoint, 1.0, 1.0);
     }
   }
@@ -259,6 +266,26 @@ float getAudioLevel() {
     return 1.0 + drawingFactor * (trackPitch * player.left.level() + trackPitch * player.right.level());
   }
   return 1.0;
+}
+
+PGraphics cutoutCircle(float w, float h) {
+  PGraphics circle = createGraphics((int)w, (int)h);
+  circle.beginDraw();
+  circle.background(255);
+  circle.noStroke();
+  circle.fill(0);
+  circle.ellipse(w / 2, h / 2, w, h);
+  circle.endDraw();
+  return circle;
+}
+
+PGraphics cutoutHole(PGraphics cutout) {
+  cutout.beginDraw();
+  cutout.stroke(255);
+  cutout.fill(255);
+  cutout.ellipse(cutout.width / 2, cutout.height / 2, drawingFactor * holeDiameter, drawingFactor * holeDiameter);
+  cutout.endDraw();
+  return cutout;
 }
 
 // This function returns all the files in a directory as an array of Strings
