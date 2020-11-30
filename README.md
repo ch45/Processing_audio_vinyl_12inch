@@ -8,6 +8,7 @@ Loosely replicate the processing and play back of a vinyl record (WIP).
 - Now draws the vinyl 'biscuit'
 - Now renders an audio file placed in a data sub directory
 - Add rendering of audio file to PDF vinyl
+- Draw a multi-colour vinyl (when no audio file is given)
 
 ## TODO
 

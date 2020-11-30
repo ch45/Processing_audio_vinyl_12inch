@@ -138,9 +138,9 @@ void pourBiscuitSplatter() {
   int background = vinylCutout.get(0, 0);
 
   for (int y = -(int)yPoint; y <= (int)yPoint; y++) {
-    int cutoutColour = vinylCutout.get((int)(offsetToCentre + xPoint), (int)(offsetToCentre + y));
+    color cutoutColour = vinylCutout.get((int)(offsetToCentre + xPoint), (int)(offsetToCentre + y));
     if (cutoutColour != background) {
-      int vinylColour = getVinylColour(-xPoint, y);
+      color vinylColour = getVinylColour(-xPoint, y);
       stroke(vinylColour);
       fill(vinylColour);
       ellipse(-xPoint, y, 1.0, 1.0);
@@ -152,9 +152,9 @@ void pourBiscuitSplatter() {
   }
 
   for (int x = -(int)xPoint; x <= (int)xPoint; x++) {
-    int cutoutColour = vinylCutout.get((int)(offsetToCentre + x), (int)(offsetToCentre + yPoint));
+    color cutoutColour = vinylCutout.get((int)(offsetToCentre + x), (int)(offsetToCentre + yPoint));
     if (cutoutColour != background) {
-      int vinylColour = getVinylColour(x, -yPoint);
+      color vinylColour = getVinylColour(x, -yPoint);
       stroke(vinylColour);
       fill(vinylColour);
       ellipse(x, -yPoint, 1.0, 1.0);
@@ -195,8 +195,11 @@ void cutVinyl() {
   rotateVinyl();
 }
 
-int getVinylColour(float x, float y) {
-  return 0;
+final color[] splatterColours = {#87FF2A, #E936A7};
+color getVinylColour(float x, float y) {
+  float value = noise((width + x) * 0.02, (height + y) * 0.01);
+  int elem = (int)map(value, 0.0, 1.0, 0, splatterColours.length);
+  return splatterColours[elem];
 }
 
 static float totalAngle = 0;
