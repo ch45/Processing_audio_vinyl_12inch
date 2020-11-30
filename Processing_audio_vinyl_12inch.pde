@@ -225,9 +225,9 @@ void rotateVinyl() {
     case LEADIN:
       if (currentRadius <= maxOuterDiameter / 2 - leadinRevolutions * leadinPitch) {
         currentPhase = Phase.TRACK;
-      }
-      if (player != null) {
-        player.play();
+        if (player != null) {
+          player.play();
+        }
       }
       break;
     case TRACK:
@@ -279,10 +279,14 @@ boolean liftStylus() {
 float getTrackDuration() {
   if (player != null) {
     int m = player.length();
-    println(String.format("player.length() %7d", m));
+    println("Time: " + getFormattedDuration(m));
     return m / 1000.0;
   }
   return 2.5 * 60; // 2 minute 30 second track
+}
+
+String getFormattedDuration(int m) {
+  return String.format("%d.%02d", floor(m / 60000), floor((m / 1000) % 60));
 }
 
 float getFPS() {
@@ -378,10 +382,18 @@ void dumpMetaData() {
     fill(labelTextColour);
     textSize(size);
     translate(width / 2, height / 2);
-    String txt = String.format("%s (%s)", meta.title(), meta.composer());
+    String txt = meta.title();
+    text(txt, -size * txt.length() / 4, y += size);
+    txt = meta.composer();
+    if (txt != null && txt != "") {
+      text("(" + txt + ")", -size * (txt.length() + 2) / 4, y += size);
+    }
+    txt = "Time: " + getFormattedDuration(player.length());
     text(txt, -size * txt.length() / 4, y += size);
     txt = meta.album();
-    text(txt, -size * txt.length() / 4, y += size);
+    if (txt != null && txt != "") {
+      text(txt, -size * txt.length() / 4, y += size);
+    }
     txt = meta.author();
     text(txt, -size * txt.length() / 4, y += size);
     txt = meta.date();
