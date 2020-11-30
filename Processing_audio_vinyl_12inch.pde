@@ -22,11 +22,11 @@ final int backgroundColour = 255;
 final int grooveColour = 192;
 final int labelTextColour = 192;
 final int textColour = 32;
+final color[] splatterColours = {#87FF2A, #E936A7};
 
 Phase currentPhase;
 float currentAngle;
 float currentRadius;
-float trackChord;
 float trackPitch;
 float drawingFactor;
 boolean writingPDF;
@@ -70,9 +70,12 @@ void draw() {
   case TRACK:
   case LEADOUT:
   case LOCKED:
+    pushMatrix();
+    translate(width / 2, height / 2);
     for (int count = REPS; count > 0; count--) {
       cutVinyl();
     }
+    popMatrix();
     break;
   case LIFT:
     if (enablePDF) {
@@ -82,7 +85,7 @@ void draw() {
       } else {
         exit();
       }
-    } 
+    }
   default:
     break;
   }
@@ -124,7 +127,6 @@ void placeVinylBiscuit() {
   popMatrix();
   currentPhase = Phase.DROP;
   currentRadius = maxOuterDiameter / 2;
-  trackChord = getTrackChord();
 }
 
 void pourBiscuitSplatter() {
@@ -172,30 +174,30 @@ void pourBiscuitSplatter() {
   if (currentRadius > vinylDiameter / 2) {
     currentPhase = Phase.DROP;
     currentRadius = maxOuterDiameter / 2;
-    trackChord = getTrackChord();
   }
 }
 
+float xLast = 0.0;
+float yLast = 0.0;
 void cutVinyl() {
   float xPoint = drawingFactor * currentRadius * sin(currentAngle);
-  float yPoint = drawingFactor * currentRadius * cos(currentAngle);
+  float yPoint = -drawingFactor * currentRadius * cos(currentAngle);
 
-  pushMatrix();
+  stroke(grooveColour);
 
-  translate(width / 2 + xPoint, height / 2 - yPoint);
+  if (xLast == 0.0) {
+    point(xPoint, yPoint);
+  } else {
+    strokeWeight(getAudioLevel());
+    line(xLast, yLast, xPoint, yPoint);
+  }
 
-  noStroke();
-  rotate(currentAngle);
-  fill(grooveColour);
-
-  ellipse(0, 0, trackChord, getAudioLevel());
-
-  popMatrix();
+  xLast = xPoint;
+  yLast = yPoint;
 
   rotateVinyl();
 }
 
-final color[] splatterColours = {#87FF2A, #E936A7};
 color getVinylColour(float x, float y) {
   float value = noise((width + x) * 0.02, (height + y) * 0.01);
   int elem = (int)map(value, 0.0, 1.0, 0, splatterColours.length);
@@ -216,7 +218,6 @@ void rotateVinyl() {
 
   // Do once a revolution stuff
   if (totalAngle >= TWO_PI) {
-    trackChord = getTrackChord();
     switch (currentPhase) {
     case DROP:
       dumpMetaData();
@@ -265,7 +266,7 @@ void rotateVinyl() {
   }
   currentRadius -= curPitch * getRevolutionsPerSecond() / (REPS * getFPS());
 
-  String curText = String.format("currentPhase %s curPitch %5.2f trackChord %5.2f", currentPhase, curPitch, trackChord);
+  String curText = String.format("currentPhase %s curPitch %5.2f", currentPhase, curPitch);
   if (!curText.equals(consoleText)) {
     println(curText);
     consoleText = curText;
@@ -295,10 +296,6 @@ float getFPS() {
 
 float getRevolutionsPerSecond() {
   return RPM / 60;
-}
-
-float getTrackChord() {
-  return floor(TWO_PI * drawingFactor * currentRadius / (REPS * getFPS()) + 1);
 }
 
 float getAudioLevel() {
